@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "sap-system-discovery-mcp": "./dist/index.js"
+    "sap-system-discovery-mcp": "dist/index.js"
   },
   "files": [
     "dist"
