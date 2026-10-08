@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import * as z from "zod/v4";
@@ -7,7 +9,7 @@ import { XMLParser } from "fast-xml-parser";
 
 serveStdio(() => {
   const server = new McpServer({
-    name: "sap-mcp-test",
+    name: "sap-system-discovery-mcp",
     version: "1.0.0"
   });
 

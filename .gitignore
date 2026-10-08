@@ -1,5 +1,8 @@
 node_modules/
 dist/
+
+# npm package artifacts
+*.tgz
 .env
 .env.*
 *.log

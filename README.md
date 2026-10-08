@@ -1,11 +1,16 @@
-# SAP Logon MCP Test Server
+# SAP System Discovery MCP Server (Trial version)
 
-A small, read-only Model Context Protocol server for experimenting with Claude Code and locally configured SAP Logon systems on Windows.
+A read-only Model Context Protocol server for discovering SAP systems
+configured in the current Windows user's local SAP Logon landscape.
+
+The server is distributed as:
+
+```text
+sap-system-discovery-mcp
 
 The server currently exposes two MCP tools:
 
 1. `list_sap_systems`
-   - Reads the current Windows user's SAP Logon landscape configuration.
    - Returns only the configured SAP System ID and entry name.
 2. `calculate_effort` (ignore this)
    - Calculates project effort from the number of people, working days and working hours per day.
@@ -27,21 +32,13 @@ This proof of concept currently requires:
 - Claude Code (ignore if installed already)
 - A user-specific `SAPUILandscape.xml` file in the standard SAP configuration location
 
-The tool looks for:
-
-```text
-%APPDATA%\SAP\Common\SAPUILandscape.xml
-```
-
-The server derives `%APPDATA%` from the current user's Windows environment. No Windows username or absolute user path is hardcoded.
-
 ## Current tools
 
 ### `list_sap_systems`
 
-Lists SAP systems from the current user's SAP Logon landscape.
+Lists SAP systems from the current user's SAP Logon.
 
-The tool returns only:
+The tool currently returns only:
 
 - System ID
 - SAP Logon entry name
@@ -50,9 +47,9 @@ Example output:
 
 ```text
 Configured SAP systems:
-DS4 | DS4 [Development]
-QS4 | QS4 [Quality]
-PS4 | PS4 [Production]
+DXX | DXX [Development]
+QXX | QXX [Quality]
+PXX | PXX [Production]
 ```
 
 The actual result depends on the SAP systems configured for the user running the MCP server.
@@ -67,7 +64,7 @@ The tool does not return:
 - SNC settings
 - Live connection status
 
-### `calculate_effort` (ignore this)
+### `calculate_effort` (Optional)
 
 Calculates total project effort using:
 
@@ -95,74 +92,39 @@ The SAP Logon tool:
 - Does not read or return credentials.
 - Retains only the `systemid` and `name` attributes from each discovered service.
 
-Do not copy or commit any of the following into this repository:
-
-- `SAPUILandscape.xml`
-- `SAPUILandscapeGlobal.xml`
-- `.claude.json`
-- API keys
-- Access tokens
-- SAP credentials
-- Internal system connection details
-- `.env` files
-
-Review the source code before registering or running any local MCP server.
-
 ## Installation
 
-### 1. Clone the repository
+### Prerequisites
 
-```powershell
-git clone <REPOSITORY-URL>
-cd sap-mcp-test
-```
+Before installing the MCP server, confirm that the following are available: 
+- Windows 
+- SAP Logon for Windows 
+- Node.js and npm 
+- Claude Code, installed and authenticated
 
-Replace `<REPOSITORY-URL>` with the actual repository URL.
-
-If the repository folder has a different name, change into that folder instead.
-
-### 2. Install dependencies
-
-```powershell
-npm install
-```
-
-### 3. Verify the TypeScript code
-
-```powershell
-npx tsc --noEmit
-```
-
-A successful type-check normally returns to the PowerShell prompt without displaying an error.
 
 ## Register with Claude Code at user scope
 
 Run the following commands from the repository root in PowerShell:
 
 ```powershell
-$serverPath = (Resolve-Path ".\src\index.ts").Path
-
-claude mcp add --transport stdio --scope user sap-mcp-test -- npx tsx "$serverPath"
+claude mcp add --scope user sap-system-discovery sap-system-discovery-mcp
 ```
 
-This registers the local MCP server in the current user's Claude Code configuration.
+- This adds the MCP server to the current user's Claude Code configuration.
 
-It does not require committing a personal `.claude.json` file to the repository.
+- The registration is user-scoped, so it is available across that user's Claude Code projects.
+
+- No manual editing of .claude.json is required.
+
 
 ## Verify the MCP registration
 
 From PowerShell, run:
 
 ```powershell
-claude mcp get sap-mcp-test
+claude mcp get sap-system-discovery
 ```
-
-The result should show:
-
-- Scope: user configuration
-- Type: stdio
-- Command: `npx`
-- Connection status: connected
 
 You can also list configured MCP servers:
 
@@ -170,7 +132,7 @@ You can also list configured MCP servers:
 claude mcp list
 ```
 
-## Test in Claude Code
+## Run in Claude Code
 
 Start Claude Code:
 
@@ -184,16 +146,27 @@ Inside Claude Code, run:
 /mcp
 ```
 
-Select `sap-mcp-test`.
+Select `sap-system-discovery`. 
+
+A successful registration should show: 
+```text 
+Status: connected 
+Command: sap-system-discovery-mcp 
+Capabilities: tools 
+Tools: 2 tools 
+```
 
 The server should expose:
 
 ```text
-calculate_effort
 list_sap_systems
+calculate_effort (optional, ignore it)
 ```
 
 ## Example prompts
+
+Claude Code can select the relevant MCP tool from a natural-language request.
+The server and tool names normally do not need to be mentioned.
 
 ### List configured SAP systems
 
@@ -205,47 +178,36 @@ Show me the SAP systems configured in my SAP Logon.
 
 Claude Code should select `list_sap_systems` when the tool is available and relevant.
 
-### Calculate project effort
+### Calculate project effort (Optional, you may try)
 
 ```text
 Calculate the project effort for 7 people working for 15 days at 8 hours per day.
 ```
 
-
-## Troubleshooting
-
-### `SAP Logon landscape configuration was not found`
-
-Confirm that this file exists:
-
-```text
-%APPDATA%\SAP\Common\SAPUILandscape.xml
-```
-
-Some installations may use centrally managed or differently located SAP landscape configuration. This proof of concept currently checks only the standard per-user file location.
-
-## Remove the server
-
-To remove the personal MCP registration:
-
+## Uninstall
+ 
+First remove the Claude Code registration:
+ 
 ```powershell
-claude mcp remove sap-mcp-test
+claude mcp remove --scope user sap-system-discovery
 ```
-
-Removing the registration does not delete the cloned repository.
+ 
+Then uninstall the npm package:
+ 
+```powershell
+npm uninstall -g sap-system-discovery-mcp
+```
 
 ## Project status
 
-This project is currently a proof of concept.
+This project is currently a proof of concept for experimental use.
 
 Implemented:
 
 - Local stdio MCP server
 - `list_sap_systems`
-- `calculate_effort` (ignore this)
-- Runtime discovery through `%APPDATA%`
+- `calculate_effort` (optional, ignore this)
 - Minimal SAP landscape data exposure
-- MCP Inspector testing
 - Claude Code user-scope registration
 
 Next Scope:
